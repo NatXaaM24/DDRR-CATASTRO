@@ -180,7 +180,7 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 
 - [x] T-0.1 Crear el repositorio Git con las ramas `main` y `dev`, y el `.gitignore` (`.env`, `storage/`, `node_modules/`, `.venv/`).
 - [x] T-0.2 Crear `docker-compose.yml` con PostgreSQL + PostGIS y Redis; verificar que levantan.
-- [ ] T-0.3 Instalar Ollama en el equipo, descargar un modelo de prueba y verificar una respuesta desde la terminal.
+- [x] T-0.3 Instalar Ollama en el equipo, descargar un modelo de prueba y verificar una respuesta desde la terminal.
 - [x] T-0.4 Instalar Tesseract con el idioma español y verificar que lee un PDF escaneado de ejemplo.
 - [ ] T-0.5 Inicializar el backend con uv, instalar las dependencias del stack y crear la estructura de carpetas.
 - [ ] T-0.6 Configurar Ruff y crear `.env.example` y `core/config.py`.
