@@ -1,9 +1,9 @@
 from logging.config import fileConfig
 
-import geoalchemy2  # noqa: F401
+import geoalchemy2 
+from alembic import context
 from sqlalchemy import create_engine, pool
 
-from alembic import context
 from app.core.config import get_settings
 from app.core.db import Base
 
@@ -36,7 +36,11 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    engine = create_engine(get_settings().database_url, poolclass=pool.NullPool)
+    engine = create_engine(
+        get_settings().database_url,
+        poolclass=pool.NullPool,
+        connect_args={"options": "-csearch_path=public"},
+    )
     with engine.connect() as connection:
         context.configure(
             connection=connection,
