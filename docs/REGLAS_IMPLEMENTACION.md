@@ -182,9 +182,9 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 - [x] T-0.2 Crear `docker-compose.yml` con PostgreSQL + PostGIS y Redis; verificar que levantan.
 - [x] T-0.3 Instalar Ollama en el equipo, descargar un modelo de prueba y verificar una respuesta desde la terminal.
 - [x] T-0.4 Instalar Tesseract con el idioma español y verificar que lee un PDF escaneado de ejemplo.
-- [ ] T-0.5 Inicializar el backend con uv, instalar las dependencias del stack y crear la estructura de carpetas.
-- [ ] T-0.6 Configurar Ruff y crear `.env.example` y `core/config.py`.
-- [ ] T-0.7 Crear la aplicación FastAPI con el endpoint `GET /api/v1/health`.
+- [x] T-0.5 Inicializar el backend con uv, instalar las dependencias del stack y crear la estructura de carpetas.
+- [x] T-0.6 Configurar Ruff y crear `.env.example` y `core/config.py`.
+- [x] T-0.7 Crear la aplicación FastAPI con el endpoint `GET /api/v1/health`.
 - [ ] T-0.8 Inicializar Alembic y conectar con la base de datos.
 - [ ] T-0.9 Inicializar el frontend (Vite + React + TypeScript + Tailwind) y configurar ESLint y Prettier.
 - [ ] T-0.10 Crear `docs/dependencias.md` y copiar este documento en `docs/`.
