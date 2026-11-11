@@ -3,6 +3,7 @@ from sqlalchemy import text
 
 from app.core.config import get_settings
 from app.core.db import DbSession
+from app.core.errors import registrar_manejadores
 
 settings = get_settings()
 
@@ -12,6 +13,8 @@ app = FastAPI(
     docs_url="/api/v1/docs",
     openapi_url="/api/v1/openapi.json",
 )
+
+registrar_manejadores(app)
 
 api_v1 = APIRouter(prefix="/api/v1")
 
