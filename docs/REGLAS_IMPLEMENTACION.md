@@ -185,13 +185,13 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 - [x] T-0.5 Inicializar el backend con uv, instalar las dependencias del stack y crear la estructura de carpetas.
 - [x] T-0.6 Configurar Ruff y crear `.env.example` y `core/config.py`.
 - [x] T-0.7 Crear la aplicación FastAPI con el endpoint `GET /api/v1/health`.
-- [ ] T-0.8 Inicializar Alembic y conectar con la base de datos.
-- [ ] T-0.9 Inicializar el frontend (Vite + React + TypeScript + Tailwind) y configurar ESLint y Prettier.
-- [ ] T-0.10 Crear `docs/dependencias.md` y copiar este documento en `docs/`.
+- [x] T-0.8 Inicializar Alembic y conectar con la base de datos.
+- [x] T-0.9 Inicializar el frontend (Vite + React + TypeScript + Tailwind) y configurar ESLint y Prettier.
+- [x] T-0.10 Crear `docs/dependencias.md` y copiar este documento en `docs/`.
 
 ### Fase 1 — Base del backend
 
-- [ ] T-1.1 Crear la clase base de modelos (UUID, `created_at`, `updated_at`).
+- [x] T-1.1 Crear la clase base de modelos (UUID, `created_at`, `updated_at`).
 - [ ] T-1.2 Configurar la sesión de base de datos y la inyección de dependencias.
 - [ ] T-1.3 Implementar el manejador de errores con el formato único (R-BCK-5).
 - [ ] T-1.4 Configurar el logging sin datos sensibles (R-SEG-9).
