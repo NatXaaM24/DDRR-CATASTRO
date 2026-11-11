@@ -1,6 +1,8 @@
 from fastapi import APIRouter, FastAPI
+from sqlalchemy import text
 
 from app.core.config import get_settings
+from app.core.db import DbSession
 
 settings = get_settings()
 
@@ -17,6 +19,12 @@ api_v1 = APIRouter(prefix="/api/v1")
 @api_v1.get("/health", tags=["Sistema"])
 def health() -> dict[str, str]:
     return {"status": "ok", "environment": settings.environment}
+
+
+@api_v1.get("/health/db", tags=["Sistema"])
+def health_db(db: DbSession) -> dict[str, str]:
+    db.execute(text("SELECT 1"))
+    return {"status": "ok", "database": "connected"}
 
 
 app.include_router(api_v1)

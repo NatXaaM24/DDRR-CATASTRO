@@ -1,8 +1,13 @@
 import uuid
+from collections.abc import Iterator
 from datetime import datetime
+from typing import Annotated
 
-from sqlalchemy import DateTime, MetaData, func, text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from fastapi import Depends
+from sqlalchemy import DateTime, MetaData, create_engine, func, text
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+
+from app.core.config import get_settings
 
 CONVENCIONES = {
     "ix": "ix_%(column_0_label)s",
@@ -34,3 +39,16 @@ class ModeloBase(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+engine = create_engine(get_settings().database_url, pool_pre_ping=True)
+
+SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+
+
+def get_db() -> Iterator[Session]:
+    with SessionLocal() as db:
+        yield db
+
+
+DbSession = Annotated[Session, Depends(get_db)]
