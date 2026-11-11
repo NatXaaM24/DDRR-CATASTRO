@@ -4,6 +4,9 @@ from sqlalchemy import text
 from app.core.config import get_settings
 from app.core.db import DbSession
 from app.core.errors import registrar_manejadores
+from app.core.logging import configurar_logging
+
+configurar_logging()
 
 settings = get_settings()
 
