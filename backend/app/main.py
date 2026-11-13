@@ -5,6 +5,7 @@ from app.core.config import get_settings
 from app.core.db import DbSession
 from app.core.errors import registrar_manejadores
 from app.core.logging import configurar_logging
+from app.modules.auth.router import router as auth_router
 
 configurar_logging()
 
@@ -33,4 +34,6 @@ def health_db(db: DbSession) -> dict[str, str]:
     return {"status": "ok", "database": "connected"}
 
 
+api_v1.include_router(auth_router)
 app.include_router(api_v1)
+app.include_router(auth_router, prefix="/api/v1")
