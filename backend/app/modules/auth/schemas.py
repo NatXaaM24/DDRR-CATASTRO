@@ -17,3 +17,10 @@ class UsuarioSalida(BaseModel):
     username: str
     nombre_completo: str
     rol: Rol
+
+
+class TokenSalida(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int  # segundos
+    usuario: UsuarioSalida

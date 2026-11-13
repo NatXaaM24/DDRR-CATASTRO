@@ -199,9 +199,9 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 
 ### Fase 2 — Identidad, seguridad y funcionarios
 
-- [ ] T-2.1 Modelo y migración de usuarios con rol (`funcionario`, `encargado`).
-- [ ] T-2.2 Registro de contraseñas con argon2 y login con usuario y contraseña.
-- [ ] T-2.3 Emisión de token de acceso (15 min) y refresh en cookie `httpOnly`; endpoints de refresh y logout.
+- [x] T-2.1 Modelo y migración de usuarios con rol (`funcionario`, `encargado`).
+- [x] T-2.2 Registro de contraseñas con argon2 y login con usuario y contraseña.
+- [x] T-2.3 Emisión de token de acceso (15 min) y refresh en cookie `httpOnly`; endpoints de refresh y logout.
 - [ ] T-2.4 Dependencia de autorización por rol (R-SEG-1).
 - [ ] T-2.5 Registro y verificación de credencial WebAuthn en el backend.
 - [ ] T-2.6 Límite de intentos de login (R-SEG-6).
