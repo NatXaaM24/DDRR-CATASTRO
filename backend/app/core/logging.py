@@ -1,7 +1,6 @@
 import logging
 import re
 
-# Si un mensaje contiene "password=algo" o "token: algo", el valor se oculta.
 PATRON_SENSIBLE = re.compile(
     r"(?i)(password|contrasena|token|authorization|secret|cookie)(\s*[=:]\s*)([^\s,;&]+)"
 )
@@ -24,5 +23,4 @@ def configurar_logging(nivel: str = "INFO") -> None:
     raiz.handlers = [handler]
     raiz.setLevel(nivel)
 
-    # SQLAlchemy puede imprimir los parámetros de las consultas: lo limitamos.
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
