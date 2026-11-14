@@ -19,10 +19,13 @@ class ErrorApp(Exception):
     status_code: int = 500
     code: str = "error_interno"
     message: str = "Ocurrió un error interno."
+    headers: dict[str, str] | None = None
 
-    def __init__(self, message: str | None = None) -> None:
+    def __init__(self, message: str | None = None, headers: dict[str, str] | None = None) -> None:
         if message is not None:
             self.message = message
+        if headers is not None:
+            self.headers = headers
         super().__init__(self.message)
 
 
@@ -56,6 +59,12 @@ class ReglaDeNegocio(ErrorApp):
     message = "La operación no cumple una regla del sistema."
 
 
+class DemasiadosIntentos(ErrorApp):
+    status_code = 429
+    code = "demasiados_intentos"
+    message = "Demasiados intentos. Intenta de nuevo más tarde."
+
+
 MENSAJES_HTTP = {
     401: ("no_autenticado", "Debes iniciar sesión para continuar."),
     403: ("sin_permiso", "No tienes permiso para realizar esta acción."),
@@ -75,7 +84,7 @@ def _respuesta(
 
 
 async def manejar_error_app(request: Request, exc: ErrorApp) -> JSONResponse:
-    return _respuesta(exc.status_code, exc.code, exc.message)
+    return _respuesta(exc.status_code, exc.code, exc.message, exc.headers)
 
 
 async def manejar_http(request: Request, exc: StarletteHTTPException) -> JSONResponse:

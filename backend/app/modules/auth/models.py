@@ -31,3 +31,12 @@ class RetoWebAuthn(ModeloBase):
     )
     reto: Mapped[bytes] = mapped_column(LargeBinary)
     expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class IntentoLogin(ModeloBase):
+    """Un intento de login fallido. Se usa para limitar intentos (R-SEG-6)."""
+
+    __tablename__ = "intentos_login"
+
+    username: Mapped[str] = mapped_column(String(50), index=True)
+    ip: Mapped[str] = mapped_column(String(45), index=True)  # 45 caracteres = IPv6

@@ -31,11 +31,16 @@ class Settings(BaseSettings):
     secret_key: str
     access_token_minutes: int = 15
     refresh_token_days: int = 7
+    inactivity_minutes: int = 10
     preauth_minutes: int = 5
     reto_minutes: int = 5
+
     webauthn_rp_id: str = "localhost"
     webauthn_rp_name: str = "Plataforma DDRR-Catastro"
-    inactivity_minutes: int = 10
+
+    login_max_intentos_usuario: int = 5
+    login_max_intentos_ip: int = 20
+    login_ventana_minutos: int = 15
 
     max_upload_mb: int = 20
     storage_dir: Path = RAIZ_PROYECTO / "storage"
