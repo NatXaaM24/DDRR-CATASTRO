@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Response
+from fastapi import APIRouter, Cookie, Request, Response
 
 from app.core.config import get_settings
 from app.core.db import DbSession
@@ -55,8 +55,9 @@ def _completar_sesion(usuario: Usuario, response: Response, db: DbSession) -> To
 
 
 @router.post("/login", response_model=LoginSalida)
-def login(datos: LoginRequest, db: DbSession) -> LoginSalida:
-    preauth, tiene_credencial = AuthService(db).iniciar_login(datos.username, datos.password)
+def login(datos: LoginRequest, request: Request, db: DbSession) -> LoginSalida:
+    ip = request.client.host if request.client else "desconocida"
+    preauth, tiene_credencial = AuthService(db).iniciar_login(datos.username, datos.password, ip)
     return LoginSalida(
         preauth_token=preauth,
         expires_in=get_settings().preauth_minutes * 60,

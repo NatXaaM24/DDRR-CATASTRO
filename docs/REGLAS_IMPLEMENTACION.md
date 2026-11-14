@@ -204,7 +204,7 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 - [x] T-2.3 Emisión de token de acceso (15 min) y refresh en cookie `httpOnly`; endpoints de refresh y logout.
 - [x] T-2.4 Dependencia de autorización por rol (R-SEG-1).
 - [x] T-2.5 Registro y verificación de credencial WebAuthn en el backend.
-- [ ] T-2.6 Límite de intentos de login (R-SEG-6).
+- [x] T-2.6 Límite de intentos de login (R-SEG-6).
 - [ ] T-2.7 Control de inactividad en el servidor (R-SEG-4).
 - [ ] T-2.8 Módulo `funcionarios`: crear, listar, ver, editar y eliminar (solo `encargado`).
 - [ ] T-2.9 Módulo `bitacora`: registro de acciones con usuario, fecha y hora; endpoint de consulta.

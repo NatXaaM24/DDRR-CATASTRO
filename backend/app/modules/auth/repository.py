@@ -1,10 +1,10 @@
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from app.modules.auth.models import CredencialWebAuthn, RetoWebAuthn
+from app.modules.auth.models import CredencialWebAuthn, IntentoLogin, RetoWebAuthn
 
 
 class AuthRepository:
@@ -41,3 +41,28 @@ class AuthRepository:
     def crear_credencial(self, credencial: CredencialWebAuthn) -> None:
         self.db.add(credencial)
         self.db.flush()
+
+    # ---------- Intentos de login (R-SEG-6) ----------
+
+    def registrar_fallo(self, username: str, ip: str) -> None:
+        self.db.add(IntentoLogin(username=username, ip=ip))
+        self.db.flush()
+
+    def contar_fallos_usuario(self, username: str, desde: datetime) -> int:
+        consulta = (
+            select(func.count())
+            .select_from(IntentoLogin)
+            .where(IntentoLogin.username == username, IntentoLogin.created_at >= desde)
+        )
+        return self.db.scalar(consulta) or 0
+
+    def contar_fallos_ip(self, ip: str, desde: datetime) -> int:
+        consulta = (
+            select(func.count())
+            .select_from(IntentoLogin)
+            .where(IntentoLogin.ip == ip, IntentoLogin.created_at >= desde)
+        )
+        return self.db.scalar(consulta) or 0
+
+    def borrar_fallos_usuario(self, username: str) -> None:
+        self.db.execute(delete(IntentoLogin).where(IntentoLogin.username == username))

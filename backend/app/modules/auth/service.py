@@ -1,10 +1,10 @@
 import uuid
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.errors import NoAutenticado
+from app.core.errors import DemasiadosIntentos, NoAutenticado
 from app.core.security import (
     TIPO_ACCESO,
     TIPO_PREAUTH,
@@ -14,6 +14,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+from app.modules.auth.repository import AuthRepository
 from app.modules.auth.webauthn_service import WebAuthnService
 from app.modules.funcionarios.models import Usuario
 from app.modules.funcionarios.service import FuncionarioService
@@ -25,6 +26,8 @@ _HASH_FALSO = hash_password("relleno-no-usar")
 
 class AuthService:
     def __init__(self, db: Session) -> None:
+        self.db = db
+        self.repo = AuthRepository(db)
         self.funcionarios = FuncionarioService(db)
         self.webauthn = WebAuthnService(db)
 
@@ -37,9 +40,31 @@ class AuthService:
             raise NoAutenticado("Usuario o contraseña incorrectos.")
         return usuario
 
-    def iniciar_login(self, username: str, password: str) -> tuple[str, bool]:
+    def _verificar_bloqueo(self, username: str, ip: str) -> None:
+        """Corta el intento si hubo demasiados fallos recientes (R-SEG-6)."""
+        settings = get_settings()
+        ventana = timedelta(minutes=settings.login_ventana_minutos)
+        desde = datetime.now(UTC) - ventana
+        por_usuario = self.repo.contar_fallos_usuario(username, desde)
+        por_ip = self.repo.contar_fallos_ip(ip, desde)
+        if (
+            por_usuario >= settings.login_max_intentos_usuario
+            or por_ip >= settings.login_max_intentos_ip
+        ):
+            raise DemasiadosIntentos(headers={"Retry-After": str(int(ventana.total_seconds()))})
+
+    def iniciar_login(self, username: str, password: str, ip: str) -> tuple[str, bool]:
         """Paso 1: valida la contraseña. Devuelve (preauth_token, tiene_credencial)."""
-        usuario = self.autenticar(username, password)
+        username = username[:50]  # la columna de intentos_login admite 50 caracteres
+        self._verificar_bloqueo(username, ip)
+        try:
+            usuario = self.autenticar(username, password)
+        except NoAutenticado:
+            self.repo.registrar_fallo(username, ip)
+            self.db.commit()  # sin esto el fallo se pierde al lanzar la excepción
+            raise
+        self.repo.borrar_fallos_usuario(username)
+        self.db.commit()
         preauth = crear_token(
             str(usuario.id),
             TIPO_PREAUTH,
