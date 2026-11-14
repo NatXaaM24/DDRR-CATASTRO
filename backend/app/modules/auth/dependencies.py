@@ -11,17 +11,23 @@ from app.modules.funcionarios.models import Rol, Usuario
 
 _bearer = HTTPBearer(auto_error=False)
 
+Credenciales = Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)]
 
-def usuario_actual(
-    db: DbSession,
-    credenciales: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
-) -> Usuario:
+
+def usuario_actual(db: DbSession, credenciales: Credenciales) -> Usuario:
     if credenciales is None:
         raise NoAutenticado()
     return AuthService(db).usuario_desde_acceso(credenciales.credentials)
 
 
+def usuario_preauth(db: DbSession, credenciales: Credenciales) -> Usuario:
+    if credenciales is None:
+        raise NoAutenticado()
+    return AuthService(db).usuario_desde_preauth(credenciales.credentials)
+
+
 UsuarioActual = Annotated[Usuario, Depends(usuario_actual)]
+UsuarioPreauth = Annotated[Usuario, Depends(usuario_preauth)]
 
 
 def requiere_rol(*roles: Rol) -> Callable[[Usuario], Usuario]:

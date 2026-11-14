@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.db import ModeloBase
 
 
-class Rol(str, enum.Enum):
+class Rol(enum.StrEnum):
     funcionario = "funcionario"
     encargado = "encargado"
 

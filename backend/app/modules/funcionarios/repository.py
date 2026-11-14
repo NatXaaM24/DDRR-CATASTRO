@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,3 +18,6 @@ class UsuarioRepository:
         self.db.add(usuario)
         self.db.flush()
         return usuario
+
+    def obtener_por_id(self, usuario_id: uuid.UUID) -> Usuario | None:
+        return self.db.get(Usuario, usuario_id)

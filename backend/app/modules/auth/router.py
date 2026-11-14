@@ -4,9 +4,18 @@ from fastapi import APIRouter, Cookie, Response
 
 from app.core.config import get_settings
 from app.core.db import DbSession
-from app.modules.auth.dependencies import CualquierRol
-from app.modules.auth.schemas import LoginRequest, TokenSalida, UsuarioSalida
+from app.modules.auth.dependencies import CualquierRol, UsuarioPreauth
+from app.modules.auth.schemas import (
+    LoginRequest,
+    LoginSalida,
+    TokenSalida,
+    UsuarioSalida,
+    WebAuthnAutenticacionRequest,
+    WebAuthnRegistroRequest,
+)
 from app.modules.auth.service import AuthService
+from app.modules.auth.webauthn_service import WebAuthnService
+from app.modules.funcionarios.models import Usuario
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -35,13 +44,64 @@ def _respuesta_tokens(usuario: UsuarioSalida, acceso: str) -> TokenSalida:
     )
 
 
-@router.post("/login", response_model=TokenSalida)
-def login(datos: LoginRequest, response: Response, db: DbSession) -> TokenSalida:
-    servicio = AuthService(db)
-    usuario = servicio.autenticar(datos.username, datos.password)
-    acceso, refresh = servicio.emitir_tokens(usuario)
+def _completar_sesion(usuario: Usuario, response: Response, db: DbSession) -> TokenSalida:
+    """Se llama solo cuando contraseña y biometría ya fueron verificadas."""
+    acceso, refresh = AuthService(db).emitir_tokens(usuario)
     _poner_cookie(response, refresh)
     return _respuesta_tokens(UsuarioSalida.model_validate(usuario), acceso)
+
+
+# ---------- Paso 1: contraseña ----------
+
+
+@router.post("/login", response_model=LoginSalida)
+def login(datos: LoginRequest, db: DbSession) -> LoginSalida:
+    preauth, tiene_credencial = AuthService(db).iniciar_login(datos.username, datos.password)
+    return LoginSalida(
+        preauth_token=preauth,
+        expires_in=get_settings().preauth_minutes * 60,
+        tiene_credencial=tiene_credencial,
+    )
+
+
+# ---------- Paso 2: biometría (WebAuthn) ----------
+
+
+@router.post("/webauthn/registro/opciones")
+def registro_opciones(usuario: UsuarioPreauth, db: DbSession) -> Response:
+    opciones = WebAuthnService(db).opciones_registro(usuario)
+    return Response(content=opciones, media_type="application/json")
+
+
+@router.post("/webauthn/registro/verificar", response_model=TokenSalida)
+def registro_verificar(
+    datos: WebAuthnRegistroRequest,
+    usuario: UsuarioPreauth,
+    response: Response,
+    db: DbSession,
+) -> TokenSalida:
+    WebAuthnService(db).verificar_registro(usuario, datos.credencial, datos.nombre)
+    return _completar_sesion(usuario, response, db)
+
+
+@router.post("/webauthn/autenticacion/opciones")
+def autenticacion_opciones(usuario: UsuarioPreauth, db: DbSession) -> Response:
+    opciones = WebAuthnService(db).opciones_autenticacion(usuario)
+    return Response(content=opciones, media_type="application/json")
+
+
+@router.post("/webauthn/autenticacion/verificar", response_model=TokenSalida)
+def autenticacion_verificar(
+    datos: WebAuthnAutenticacionRequest,
+    usuario: UsuarioPreauth,
+    response: Response,
+    db: DbSession,
+) -> TokenSalida:
+    WebAuthnService(db).verificar_autenticacion(usuario, datos.credencial)
+    return _completar_sesion(usuario, response, db)
+
+
+# ---------- Sesión ----------
 
 
 @router.post("/refresh", response_model=TokenSalida)

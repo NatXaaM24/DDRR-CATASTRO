@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.orm import Session
 
 from app.core.errors import Conflicto
@@ -28,3 +30,6 @@ class FuncionarioService:
         self.repo.crear(usuario)
         self.db.commit()
         return usuario
+
+    def obtener_por_id(self, usuario_id: uuid.UUID) -> Usuario | None:
+        return self.repo.obtener_por_id(usuario_id)

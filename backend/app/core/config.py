@@ -30,6 +30,11 @@ class Settings(BaseSettings):
 
     secret_key: str
     access_token_minutes: int = 15
+    refresh_token_days: int = 7
+    preauth_minutes: int = 5
+    reto_minutes: int = 5
+    webauthn_rp_id: str = "localhost"
+    webauthn_rp_name: str = "Plataforma DDRR-Catastro"
     inactivity_minutes: int = 10
 
     max_upload_mb: int = 20
@@ -46,6 +51,12 @@ class Settings(BaseSettings):
             port=self.postgres_port,
             database=self.postgres_db,
         )
+
+    @property
+    def cookie_secure(self) -> bool:
+        # En desarrollo (http://localhost) la cookie no puede ser Secure;
+        # en cualquier otro entorno sí (R-SEG-3).
+        return self.environment != "development"
 
 
 @lru_cache

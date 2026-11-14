@@ -1,18 +1,43 @@
-from sqlalchemy import select
+import uuid
+from datetime import UTC, datetime
+
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.modules.funcionarios.models import Usuario
+from app.modules.auth.models import CredencialWebAuthn, RetoWebAuthn
 
 
-class UsuarioRepository:
+class AuthRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def obtener_por_username(self, username: str) -> Usuario | None:
-        consulta = select(Usuario).where(Usuario.username == username)
+    def guardar_reto(self, usuario_id: uuid.UUID, reto: bytes, expira_en: datetime) -> None:
+        # Un solo reto por usuario: el nuevo reemplaza al anterior.
+        self.db.execute(delete(RetoWebAuthn).where(RetoWebAuthn.usuario_id == usuario_id))
+        self.db.add(RetoWebAuthn(usuario_id=usuario_id, reto=reto, expira_en=expira_en))
+        self.db.flush()
+
+    def consumir_reto(self, usuario_id: uuid.UUID) -> bytes | None:
+        """Devuelve el reto vigente y lo borra (uso único)."""
+        consulta = select(RetoWebAuthn).where(
+            RetoWebAuthn.usuario_id == usuario_id,
+            RetoWebAuthn.expira_en > datetime.now(UTC),
+        )
+        reto = self.db.scalars(consulta).first()
+        valor = reto.reto if reto else None
+        self.db.execute(delete(RetoWebAuthn).where(RetoWebAuthn.usuario_id == usuario_id))
+        return valor
+
+    def listar_credenciales(self, usuario_id: uuid.UUID) -> list[CredencialWebAuthn]:
+        consulta = select(CredencialWebAuthn).where(CredencialWebAuthn.usuario_id == usuario_id)
+        return list(self.db.scalars(consulta))
+
+    def obtener_credencial(self, credential_id: bytes) -> CredencialWebAuthn | None:
+        consulta = select(CredencialWebAuthn).where(
+            CredencialWebAuthn.credential_id == credential_id
+        )
         return self.db.scalars(consulta).first()
 
-    def crear(self, usuario: Usuario) -> Usuario:
-        self.db.add(usuario)
+    def crear_credencial(self, credencial: CredencialWebAuthn) -> None:
+        self.db.add(credencial)
         self.db.flush()
-        return usuario
