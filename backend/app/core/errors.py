@@ -59,6 +59,17 @@ class ReglaDeNegocio(ErrorApp):
     message = "La operación no cumple una regla del sistema."
 
 
+class SesionExpirada(NoAutenticado):
+    code = "sesion_expirada"
+    message = "Tu sesión se cerró por inactividad. Inicia sesión de nuevo."
+
+
+class ServicioNoDisponible(ErrorApp):
+    status_code = 503
+    code = "servicio_no_disponible"
+    message = "El servicio no está disponible. Intenta de nuevo en unos minutos."
+
+
 class DemasiadosIntentos(ErrorApp):
     status_code = 429
     code = "demasiados_intentos"

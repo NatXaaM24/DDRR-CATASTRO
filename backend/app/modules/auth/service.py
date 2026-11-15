@@ -3,8 +3,9 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
+from app.core import sesion
 from app.core.config import get_settings
-from app.core.errors import DemasiadosIntentos, NoAutenticado
+from app.core.errors import DemasiadosIntentos, NoAutenticado, SesionExpirada
 from app.core.security import (
     TIPO_ACCESO,
     TIPO_PREAUTH,
@@ -81,6 +82,7 @@ class AuthService:
         refresh = crear_token(
             str(usuario.id), TIPO_REFRESH, timedelta(days=settings.refresh_token_days)
         )
+        sesion.marcar_actividad(usuario.id)
         return acceso, refresh
 
     def _usuario_desde_token(self, token: str | None, tipo: str) -> Usuario:
@@ -97,12 +99,17 @@ class AuthService:
         return usuario
 
     def usuario_desde_acceso(self, token: str | None) -> Usuario:
-        return self._usuario_desde_token(token, TIPO_ACCESO)
+        usuario = self._usuario_desde_token(token, TIPO_ACCESO)
+        if not sesion.renovar_actividad(usuario.id):
+            raise SesionExpirada()
+        return usuario
 
     def usuario_desde_preauth(self, token: str | None) -> Usuario:
         return self._usuario_desde_token(token, TIPO_PREAUTH)
 
     def refrescar(self, refresh_token: str | None) -> tuple[Usuario, str, str]:
         usuario = self._usuario_desde_token(refresh_token, TIPO_REFRESH)
+        if not sesion.renovar_actividad(usuario.id):
+            raise SesionExpirada()
         acceso, nuevo_refresh = self.emitir_tokens(usuario)
         return usuario, acceso, nuevo_refresh
