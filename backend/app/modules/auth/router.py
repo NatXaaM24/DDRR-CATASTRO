@@ -117,7 +117,12 @@ def refresh(
 
 
 @router.post("/logout", status_code=204)
-def logout(response: Response) -> None:
+def logout(
+    response: Response,
+    db: DbSession,
+    refresh_token: Annotated[str | None, Cookie()] = None,
+) -> None:
+    AuthService(db).cerrar_sesion(refresh_token)
     response.delete_cookie(COOKIE_REFRESH, path=RUTA_COOKIE)
 
 

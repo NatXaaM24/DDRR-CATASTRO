@@ -113,3 +113,13 @@ class AuthService:
             raise SesionExpirada()
         acceso, nuevo_refresh = self.emitir_tokens(usuario)
         return usuario, acceso, nuevo_refresh
+
+    def cerrar_sesion(self, refresh_token: str | None) -> None:
+        """Cierra la sesión en el servidor. Un logout con cookie rota igual debe funcionar."""
+        if not refresh_token:
+            return
+        try:
+            usuario_id = uuid.UUID(decodificar_token(refresh_token, TIPO_REFRESH))
+        except NoAutenticado, ValueError:
+            return
+        sesion.cerrar_sesion(usuario_id)
