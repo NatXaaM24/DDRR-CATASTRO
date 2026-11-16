@@ -207,7 +207,7 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 - [x] T-2.6 Límite de intentos de login (R-SEG-6).
 - [x] T-2.7 Control de inactividad en el servidor (R-SEG-4).
 - [ ] T-2.8 Módulo `funcionarios`: crear, listar, ver, editar y eliminar (solo `encargado`).
-- [ ] T-2.9 Módulo `bitacora`: registro de acciones con usuario, fecha y hora; endpoint de consulta.
+- [x] T-2.9 Módulo `bitacora`: registro de acciones con usuario, fecha y hora; endpoint de consulta.
 - [ ] T-2.10 Frontend: pantalla de login, paso WebAuthn, rutas protegidas por rol y cierre por inactividad con `react-idle-timer`.
 - [ ] T-2.11 Pruebas del módulo `auth` (login, token, roles, intentos fallidos).
 

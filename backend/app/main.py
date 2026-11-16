@@ -6,6 +6,7 @@ from app.core.db import DbSession
 from app.core.errors import registrar_manejadores
 from app.core.logging import configurar_logging
 from app.modules.auth.router import router as auth_router
+from app.modules.bitacora.router import router as bitacora_router
 
 configurar_logging()
 
@@ -35,5 +36,5 @@ def health_db(db: DbSession) -> dict[str, str]:
 
 
 api_v1.include_router(auth_router)
+api_v1.include_router(bitacora_router)
 app.include_router(api_v1)
-app.include_router(auth_router, prefix="/api/v1")
