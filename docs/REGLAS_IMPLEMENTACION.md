@@ -209,7 +209,7 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 - [x] T-2.8 Módulo `funcionarios`: crear, listar, ver, editar y eliminar (solo `encargado`).
 - [x] T-2.9 Módulo `bitacora`: registro de acciones con usuario, fecha y hora; endpoint de consulta.
 - [ ] T-2.10 Frontend: pantalla de login, paso WebAuthn, rutas protegidas por rol y cierre por inactividad con `react-idle-timer`.
-- [ ] T-2.11 Pruebas del módulo `auth` (login, token, roles, intentos fallidos).
+- [x] T-2.11 Pruebas del módulo `auth` (login, token, roles, intentos fallidos).
 
 ### Fase 3 — Documentos
 
