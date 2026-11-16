@@ -8,3 +8,4 @@ Librerías que no figuran en la tabla del stack (R-STK-3). Ninguna reemplaza una
 | pydantic-settings | Lee la configuración desde variables de entorno y `.env` | 2026-11-09 |
 | pytesseract | Permite usar Tesseract desde Python | 2026-11-09 |
 | pillow | Abre las imágenes de las páginas escaneadas para pytesseract | 2026-11-09 |
+| @hookform/resolvers | Conecta React Hook Form con Zod para validar formularios | 2026-11-15 |
