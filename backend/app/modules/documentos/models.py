@@ -32,7 +32,8 @@ class Documento(ModeloBase):
     # Ruta relativa al directorio de almacenamiento, nunca la del cliente.
     ruta: Mapped[str] = mapped_column(String(500), unique=True)
     # SHA-256 en hexadecimal (R-SEG-8): si cambia, el documento está alterado.
-    hash_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    # Único: el mismo PDF no se puede subir dos veces.
+    hash_sha256: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     tamano_bytes: Mapped[int] = mapped_column(BigInteger)
     estado: Mapped[EstadoDocumento] = mapped_column(
         Enum(EstadoDocumento, name="estado_documento"),

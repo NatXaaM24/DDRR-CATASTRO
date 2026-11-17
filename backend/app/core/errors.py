@@ -53,6 +53,11 @@ class Conflicto(ErrorApp):
     message = "La operación entra en conflicto con el estado actual."
 
 
+class DocumentoDuplicadoError(Conflicto):
+    code = "documento_duplicado"
+    message = "Este documento ya fue subido"
+
+
 class ReglaDeNegocio(ErrorApp):
     status_code = 422
     code = "regla_de_negocio"
