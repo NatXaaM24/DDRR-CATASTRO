@@ -58,6 +58,11 @@ class DocumentoDuplicado(Conflicto):
     message = "Este documento ya fue subido"
 
 
+class DocumentoAlterado(Conflicto):
+    code = "documento_alterado"
+    message = "El documento fue alterado y no puede usarse."
+
+
 class ArchivoNoValido(ErrorApp):
     status_code = 415
     code = "archivo_no_valido"
