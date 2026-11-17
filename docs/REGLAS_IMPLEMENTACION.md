@@ -214,7 +214,7 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 ### Fase 3 — Documentos
 
 - [x] T-3.1 Modelo y migración de documentos (tipo, hash, ruta, estado, usuario).
-- [ ] T-3.2 Subida de PDF con validación de tipo real y tamaño (R-SEG-7).
+- [x] T-3.2 Subida de PDF con validación de tipo real y tamaño (R-SEG-7).
 - [ ] T-3.3 Cálculo y almacenamiento del hash SHA-256 (R-SEG-8).
 - [ ] T-3.4 Endpoints: listar, ver detalle y servir el PDF con control de acceso.
 - [ ] T-3.5 Frontend: pantalla de subida y listado de documentos.
