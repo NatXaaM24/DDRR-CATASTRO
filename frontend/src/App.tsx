@@ -1,3 +1,16 @@
+import { Navigate, Route, Routes } from 'react-router'
+import { LoginPage } from './features/auth/LoginPage'
+import { RutaProtegida } from './features/auth/RutaProtegida'
+import { PaginaInicio } from './features/auth/inicio/PaginaInicio'
+
 export default function App() {
-  return <h1 className="text-3xl font-bold text-blue-600">DDRR-Catastro</h1>
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<RutaProtegida />}>
+        <Route path="/" element={<PaginaInicio />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
 }
