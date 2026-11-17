@@ -53,9 +53,21 @@ class Conflicto(ErrorApp):
     message = "La operación entra en conflicto con el estado actual."
 
 
-class DocumentoDuplicadoError(Conflicto):
+class DocumentoDuplicado(Conflicto):
     code = "documento_duplicado"
     message = "Este documento ya fue subido"
+
+
+class ArchivoNoValido(ErrorApp):
+    status_code = 415
+    code = "archivo_no_valido"
+    message = "El archivo no es un PDF válido."
+
+
+class ArchivoDemasiadoGrande(ErrorApp):
+    status_code = 413
+    code = "archivo_demasiado_grande"
+    message = "El archivo supera el tamaño máximo permitido."
 
 
 class ReglaDeNegocio(ErrorApp):
