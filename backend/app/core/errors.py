@@ -53,7 +53,7 @@ class Conflicto(ErrorApp):
     message = "La operación entra en conflicto con el estado actual."
 
 
-class DocumentoDuplicadoError(Conflicto):
+class DocumentoDuplicado(Conflicto):
     code = "documento_duplicado"
     message = "Este documento ya fue subido"
 
