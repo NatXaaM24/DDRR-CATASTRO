@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import uuid
 from pathlib import Path, PurePath
 from typing import BinaryIO
@@ -8,7 +9,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.errors import ArchivoDemasiadoGrande, ArchivoNoValido, DocumentoDuplicado
+from app.core.errors import (
+    ArchivoDemasiadoGrande,
+    ArchivoNoValido,
+    DocumentoAlterado,
+    DocumentoDuplicado,
+    NoEncontrado,
+)
 from app.modules.bitacora.service import BitacoraService
 from app.modules.documentos.models import Documento, TipoDocumento
 from app.modules.documentos.repository import DocumentoRepository
@@ -57,6 +64,15 @@ def _nombre_seguro(nombre: str | None) -> str:
     """Solo el nombre final, sin carpetas del cliente; únicamente para mostrarlo."""
     limpio = PurePath((nombre or "").replace("\\", "/")).name.strip()
     return (limpio or "documento.pdf")[:255]
+
+
+def _sha256_de_archivo(ruta: Path) -> str:
+    """SHA-256 del archivo en disco, leído por bloques para no cargarlo entero."""
+    hasher = hashlib.sha256()
+    with ruta.open("rb") as archivo:
+        while bloque := archivo.read(TAMANO_BLOQUE):
+            hasher.update(bloque)
+    return hasher.hexdigest()
 
 
 def _es_hash_duplicado(exc: IntegrityError) -> bool:
@@ -122,6 +138,50 @@ class DocumentoService:
             destino.unlink(missing_ok=True)
             raise
         return documento
+
+    def verificar_integridad(self, documento_id: uuid.UUID, *, usuario_id: uuid.UUID) -> bool:
+        """Recalcula el SHA-256 del archivo y lo compara con el guardado (R-SEG-8).
+
+        Sin hash guardado, sin archivo o con hash distinto, el documento se
+        considera alterado y queda registrado en la bitácora.
+        """
+        documento = self.repo.obtener_por_id(documento_id)
+        if documento is None:
+            raise NoEncontrado("No se encontró el documento.")
+
+        motivo = self._motivo_alteracion(documento)
+        if motivo is None:
+            return True
+
+        # El hash nunca va a la bitácora (R-SEG-9): solo el motivo.
+        self.bitacora.registrar(
+            "documento_alterado",
+            "documento",
+            usuario_id=usuario_id,
+            entidad_id=documento.id,
+            detalle={"motivo": motivo},
+        )
+        self.db.commit()
+        return False
+
+    def asegurar_integridad(self, documento_id: uuid.UUID, *, usuario_id: uuid.UUID) -> None:
+        """Lanza DocumentoAlterado si el documento no pasa la verificación."""
+        if not self.verificar_integridad(documento_id, usuario_id=usuario_id):
+            raise DocumentoAlterado()
+
+    @staticmethod
+    def _motivo_alteracion(documento: Documento) -> str | None:
+        """None si está íntegro; si no, el motivo por el que se considera alterado."""
+        if not documento.hash_sha256:
+            return "hash_faltante"
+        ruta = get_settings().storage_dir / documento.ruta
+        try:
+            actual = _sha256_de_archivo(ruta)
+        except FileNotFoundError:
+            return "archivo_faltante"
+        if not hmac.compare_digest(actual, documento.hash_sha256):
+            return "hash_distinto"
+        return None
 
     @staticmethod
     def _guardar(destino: Path, datos: bytes) -> None:

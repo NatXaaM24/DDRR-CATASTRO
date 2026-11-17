@@ -8,9 +8,11 @@ from sqlalchemy import delete, select
 
 from app.core.config import get_settings
 from app.core.db import SessionLocal
+from app.core.errors import DocumentoAlterado, NoEncontrado
 from app.modules.bitacora.models import Bitacora
 from app.modules.documentos.models import Documento
 from app.modules.documentos.repository import DocumentoRepository
+from app.modules.documentos.service import DocumentoService
 
 URL = "/api/v1/documentos"
 
@@ -133,3 +135,87 @@ def test_sin_sesion(cliente):
 def test_encargado_no_puede_subir(cliente, h_encargado):
     r = _subir(cliente, h_encargado, _pdf())
     assert r.status_code == 403
+
+
+# --- Verificación de integridad (T-3.3, R-SEG-8) ---
+
+
+@pytest.fixture
+def documento_subido(cliente, h_funcionario, borrar_documentos, almacenamiento):
+    """Sube un PDF y devuelve (id, ruta absoluta en disco)."""
+    r = _subir(cliente, h_funcionario, _pdf())
+    assert r.status_code == 201
+    documento_id = uuid.UUID(r.json()["id"])
+    with SessionLocal() as db:
+        ruta = db.get(Documento, documento_id).ruta
+    return documento_id, almacenamiento / ruta
+
+
+def _registros_alterado(documento_id: uuid.UUID) -> list[Bitacora]:
+    with SessionLocal() as db:
+        consulta = select(Bitacora).where(
+            Bitacora.entidad_id == documento_id, Bitacora.accion == "documento_alterado"
+        )
+        return list(db.scalars(consulta))
+
+
+def test_integridad_documento_intacto(documento_subido, funcionario):
+    documento_id, _ = documento_subido
+    with SessionLocal() as db:
+        assert DocumentoService(db).verificar_integridad(documento_id, usuario_id=funcionario.id)
+    assert _registros_alterado(documento_id) == []
+
+
+def test_integridad_archivo_modificado(documento_subido, funcionario):
+    documento_id, ruta = documento_subido
+    ruta.write_bytes(ruta.read_bytes() + b"%cambio")
+    with SessionLocal() as db:
+        assert not DocumentoService(db).verificar_integridad(
+            documento_id, usuario_id=funcionario.id
+        )
+    (registro,) = _registros_alterado(documento_id)
+    assert registro.detalle == {"motivo": "hash_distinto"}
+
+
+def test_integridad_archivo_borrado(documento_subido, funcionario):
+    documento_id, ruta = documento_subido
+    ruta.unlink()
+    with SessionLocal() as db:
+        assert not DocumentoService(db).verificar_integridad(
+            documento_id, usuario_id=funcionario.id
+        )
+    (registro,) = _registros_alterado(documento_id)
+    assert registro.detalle == {"motivo": "archivo_faltante"}
+
+
+def test_integridad_hash_vacio_en_bd(documento_subido, funcionario):
+    documento_id, _ = documento_subido
+    with SessionLocal() as db:
+        db.get(Documento, documento_id).hash_sha256 = ""
+        db.commit()
+    with SessionLocal() as db:
+        assert not DocumentoService(db).verificar_integridad(
+            documento_id, usuario_id=funcionario.id
+        )
+    (registro,) = _registros_alterado(documento_id)
+    assert registro.detalle == {"motivo": "hash_faltante"}
+
+
+def test_integridad_hash_nulo():
+    """La columna es NOT NULL, pero si llegara un NULL se trata como alterado."""
+    documento = Documento(hash_sha256=None, ruta="documentos/no-existe.pdf")
+    assert DocumentoService._motivo_alteracion(documento) == "hash_faltante"
+
+
+def test_integridad_documento_inexistente(funcionario):
+    with SessionLocal() as db, pytest.raises(NoEncontrado):
+        DocumentoService(db).verificar_integridad(uuid.uuid4(), usuario_id=funcionario.id)
+
+
+def test_asegurar_integridad_lanza_documento_alterado(documento_subido, funcionario):
+    documento_id, ruta = documento_subido
+    with SessionLocal() as db:
+        DocumentoService(db).asegurar_integridad(documento_id, usuario_id=funcionario.id)
+    ruta.write_bytes(b"%PDF-1.7 otro contenido")
+    with SessionLocal() as db, pytest.raises(DocumentoAlterado):
+        DocumentoService(db).asegurar_integridad(documento_id, usuario_id=funcionario.id)
