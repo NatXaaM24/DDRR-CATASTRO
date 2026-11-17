@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, pool
 
 import app.modules.auth.models  # noqa: F401
 import app.modules.bitacora.models  # noqa: F401
+import app.modules.documentos.models  # noqa: F401
 import app.modules.funcionarios.models  # noqa: F401
 from alembic import context
 from app.core.config import get_settings
