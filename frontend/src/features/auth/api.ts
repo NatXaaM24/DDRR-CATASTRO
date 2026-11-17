@@ -3,7 +3,7 @@ import type {
   startRegistration,
 } from '@simplewebauthn/browser'
 import { api } from '../../lib/api'
-import type { LoginSalida, TokenSalida } from './types'
+import type { LoginSalida, TokenSalida, Usuario } from './types'
 
 // Los tipos se deducen de la propia librería (así no dependen de nombres internos).
 type OpcionesRegistro = Parameters<typeof startRegistration>[0]['optionsJSON']
@@ -20,18 +20,21 @@ export function iniciarLogin(
   return api<LoginSalida>('/auth/login', {
     metodo: 'POST',
     cuerpo: { username, password },
+    renovar: false,
   })
 }
 
 // El refresh token viaja solo, en la cookie httpOnly: no se le pasa nada.
 export function refrescarSesion(): Promise<TokenSalida> {
-  return api<TokenSalida>('/auth/refresh', { metodo: 'POST' })
+  return api<TokenSalida>('/auth/refresh', { metodo: 'POST', renovar: false })
 }
 
 export function cerrarSesionEnServidor(): Promise<void> {
-  return api<void>('/auth/logout', { metodo: 'POST' })
+  return api<void>('/auth/logout', { metodo: 'POST', renovar: false })
+} // Renueva la actividad de la sesión en el servidor (la usa el vigilante de inactividad).
+export function mantenerSesion(): Promise<Usuario> {
+  return api<Usuario>('/auth/me')
 }
-
 // ---------- Paso 2: biometría (todas llevan el preauth_token) ----------
 
 export function pedirOpcionesRegistro(

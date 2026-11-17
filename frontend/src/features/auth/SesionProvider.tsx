@@ -1,6 +1,6 @@
-import { useCallback, useMemo, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ErrorApi, fijarToken } from '../../lib/api'
+import { ErrorApi, configurarRenovacion, fijarToken } from '../../lib/api'
 import { cerrarSesionEnServidor, refrescarSesion } from './api'
 import {
   SesionContext,
@@ -32,6 +32,24 @@ export function SesionProvider({ children }: { children: ReactNode }) {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   })
+
+  // Cuando un token de acceso vence en medio del trabajo, api() llama a esto para
+  // conseguir uno nuevo. Si no se puede (sesión cerrada), la sesión del navegador se limpia.
+  useEffect(() => {
+    configurarRenovacion(async () => {
+      try {
+        const tokens = await refrescarSesion()
+        fijarToken(tokens.access_token)
+        queryClient.setQueryData<Usuario | null>(CLAVE_SESION, tokens.usuario)
+        return tokens.access_token
+      } catch {
+        fijarToken(null)
+        queryClient.setQueryData<Usuario | null>(CLAVE_SESION, null)
+        return null
+      }
+    })
+    return () => configurarRenovacion(null)
+  }, [queryClient])
 
   const iniciarSesion = useCallback(
     (tokens: TokenSalida) => {

@@ -20,6 +20,26 @@ export function fijarToken(token: string | null): void {
   tokenDeAcceso = token
 }
 
+// La sesión registra aquí cómo conseguir un token nuevo (con la cookie de refresh).
+// Devuelve el token nuevo, o null si la sesión ya no se puede recuperar.
+type Renovador = () => Promise<string | null>
+
+let renovador: Renovador | null = null
+let renovacionEnCurso: Promise<string | null> | null = null
+
+export function configurarRenovacion(funcion: Renovador | null): void {
+  renovador = funcion
+}
+
+function renovarToken(): Promise<string | null> {
+  if (renovador === null) return Promise.resolve(null)
+  // Si ya hay una renovación en marcha, todas las peticiones esperan la misma.
+  renovacionEnCurso ??= renovador().finally(() => {
+    renovacionEnCurso = null
+  })
+  return renovacionEnCurso
+}
+
 const BASE = '/api/v1'
 
 interface Opciones {
@@ -27,6 +47,8 @@ interface Opciones {
   cuerpo?: unknown
   // Para pasos sin sesión completa (p. ej. el preauth_token del login).
   token?: string | null
+  // false en login, refresh y logout: ahí un 401 no se arregla renovando.
+  renovar?: boolean
 }
 
 interface CuerpoDeError {
@@ -34,11 +56,12 @@ interface CuerpoDeError {
   message?: string
 }
 
-export async function api<T>(
+async function peticion<T>(
   ruta: string,
-  opciones: Opciones = {},
+  opciones: Opciones,
+  token: string | null,
 ): Promise<T> {
-  const { metodo = 'GET', cuerpo, token = tokenDeAcceso } = opciones
+  const { metodo = 'GET', cuerpo } = opciones
 
   const cabeceras: Record<string, string> = {}
   if (cuerpo !== undefined) cabeceras['Content-Type'] = 'application/json'
@@ -74,4 +97,29 @@ export async function api<T>(
 
   if (respuesta.status === 204) return undefined as T
   return (await respuesta.json()) as T
+}
+
+export async function api<T>(
+  ruta: string,
+  opciones: Opciones = {},
+): Promise<T> {
+  const { renovar = true, token } = opciones
+  try {
+    return await peticion<T>(
+      ruta,
+      opciones,
+      token !== undefined ? token : tokenDeAcceso,
+    )
+  } catch (error) {
+    const sePuedeRenovar =
+      renovar &&
+      token === undefined &&
+      error instanceof ErrorApi &&
+      error.status === 401
+    if (!sePuedeRenovar) throw error
+
+    const nuevoToken = await renovarToken()
+    if (nuevoToken === null) throw error
+    return peticion<T>(ruta, opciones, nuevoToken)
+  }
 }
