@@ -226,7 +226,7 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 - [x] T-4.2 Migraciones de las tablas y los índices espaciales.
 - [x] T-4.3 Script de datos simulados (seed) con casos coherentes y casos con discrepancias deliberadas.
 - [x] T-4.4 Módulo `ddrr_catastro`: consultar partida y predio por identificador.
-- [ ] T-4.5 Pruebas de las consultas.
+- [x] T-4.5 Pruebas de las consultas.
 
 ### Fase 5 — Revisión con IA (Ollama)
 
