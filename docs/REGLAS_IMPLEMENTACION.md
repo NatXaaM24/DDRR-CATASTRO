@@ -225,7 +225,7 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 - [x] T-4.1 Definir el modelo de datos: partidas (DDRR) y predios (Catastro, con geometría PostGIS) y la proyección métrica local.
 - [x] T-4.2 Migraciones de las tablas y los índices espaciales.
 - [x] T-4.3 Script de datos simulados (seed) con casos coherentes y casos con discrepancias deliberadas.
-- [ ] T-4.4 Módulo `ddrr_catastro`: consultar partida y predio por identificador.
+- [x] T-4.4 Módulo `ddrr_catastro`: consultar partida y predio por identificador.
 - [ ] T-4.5 Pruebas de las consultas.
 
 ### Fase 5 — Revisión con IA (Ollama)

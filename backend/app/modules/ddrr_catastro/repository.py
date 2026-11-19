@@ -13,6 +13,18 @@ class DdrrCatastroRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def obtener_partida(self, matricula: str) -> Partida | None:
+        consulta = select(Partida).where(Partida.matricula == matricula)
+        return self.db.scalars(consulta).first()
+
+    def obtener_predio(self, codigo_catastral: str) -> tuple[Predio, str] | None:
+        """Predio y su geometría en GeoJSON (texto)."""
+        consulta = select(Predio, func.ST_AsGeoJSON(Predio.geometria)).where(
+            Predio.codigo_catastral == codigo_catastral
+        )
+        fila = self.db.execute(consulta).first()
+        return None if fila is None else (fila[0], fila[1])
+
     def existe_partida(self, matricula: str) -> bool:
         consulta = select(Partida.id).where(Partida.matricula == matricula)
         return self.db.scalar(consulta) is not None

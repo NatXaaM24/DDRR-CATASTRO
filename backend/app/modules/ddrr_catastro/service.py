@@ -1,13 +1,39 @@
+import json
+
 from sqlalchemy.orm import Session
 
+from app.core.errors import NoEncontrado
 from app.modules.ddrr_catastro.models import Partida, Predio
 from app.modules.ddrr_catastro.repository import DdrrCatastroRepository
+from app.modules.ddrr_catastro.schemas import PartidaSalida, PredioSalida
 
 
 class DdrrCatastroService:
     def __init__(self, db: Session) -> None:
         self.db = db
         self.repo = DdrrCatastroRepository(db)
+
+    def obtener_partida(self, matricula: str) -> PartidaSalida:
+        partida = self.repo.obtener_partida(matricula)
+        if partida is None:
+            raise NoEncontrado("No se encontró la partida en DDRR.")
+        return PartidaSalida.model_validate(partida)
+
+    def obtener_predio(self, codigo_catastral: str) -> PredioSalida:
+        resultado = self.repo.obtener_predio(codigo_catastral)
+        if resultado is None:
+            raise NoEncontrado("No se encontró el predio en Catastro.")
+        predio, geojson = resultado
+        return PredioSalida(
+            id=predio.id,
+            codigo_catastral=predio.codigo_catastral,
+            propietario_nombre=predio.propietario_nombre,
+            propietario_ci=predio.propietario_ci,
+            superficie_m2=predio.superficie_m2,
+            direccion=predio.direccion,
+            distrito=predio.distrito,
+            geometria=json.loads(geojson),
+        )
 
     def cargar_datos_simulados(
         self, partidas: list[Partida], predios: list[tuple[Predio, str]]
