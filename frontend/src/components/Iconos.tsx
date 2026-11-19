@@ -129,3 +129,30 @@ export function IconoBandeja(props: Props) {
     </Base>
   )
 }
+
+export function IconoBuscar(props: Props) {
+  return (
+    <Base {...props}>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m20 20-4.4-4.4" />
+    </Base>
+  )
+}
+
+export function IconoMapa(props: Props) {
+  return (
+    <Base {...props}>
+      <path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z" />
+      <path d="M9 4v14M15 6v14" />
+    </Base>
+  )
+}
+
+export function IconoLibro(props: Props) {
+  return (
+    <Base {...props}>
+      <path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z" />
+      <path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3M9 7h6" />
+    </Base>
+  )
+}

@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import {
   IconoDerecha,
   IconoDocumento,
+  IconoMapa,
   IconoSubir,
 } from '../../../components/Iconos'
 import { Insignia } from '../../../components/ui'
@@ -36,6 +37,12 @@ export function PaginaInicio() {
       icono: IconoDocumento,
     },
   ]
+  accesos.push({
+    a: '/ddrr-catastro',
+    titulo: 'DDRR y Catastro',
+    texto: 'Consulta partidas de Derechos Reales y predios de Catastro.',
+    icono: IconoMapa,
+  })
   if (esFuncionario) {
     accesos.push({
       a: '/documentos',
