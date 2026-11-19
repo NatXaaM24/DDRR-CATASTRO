@@ -3,6 +3,7 @@ import { DisenoApp } from './components/DisenoApp'
 import { LoginPage } from './features/auth/LoginPage'
 import { RutaProtegida } from './features/auth/RutaProtegida'
 import { PaginaInicio } from './features/auth/inicio/PaginaInicio'
+import { PaginaConsultas } from './features/ddrr_catastro/PaginaConsultas'
 import { PaginaDocumentos } from './features/documentos/PaginaDocumentos'
 import { VisorDocumento } from './features/documentos/VisorDocumento'
 
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/" element={<PaginaInicio />} />
           <Route path="/documentos" element={<PaginaDocumentos />} />
           <Route path="/documentos/:id" element={<VisorDocumento />} />
+          <Route path="/ddrr-catastro" element={<PaginaConsultas />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router'
 import { useSesion } from '../features/auth/useSesion'
-import { IconoDocumento, IconoInicio, IconoSalir } from './Iconos'
+import { IconoDocumento, IconoInicio, IconoMapa, IconoSalir } from './Iconos'
 import { Marca } from './Marca'
 
 const NOMBRES_ROL = { funcionario: 'Funcionario', encargado: 'Encargado' }
@@ -8,6 +8,12 @@ const NOMBRES_ROL = { funcionario: 'Funcionario', encargado: 'Encargado' }
 const ENLACES = [
   { a: '/', texto: 'Inicio', icono: IconoInicio, fin: true },
   { a: '/documentos', texto: 'Documentos', icono: IconoDocumento, fin: false },
+  {
+    a: '/ddrr-catastro',
+    texto: 'DDRR y Catastro',
+    icono: IconoMapa,
+    fin: false,
+  },
 ]
 
 function iniciales(nombre: string): string {
