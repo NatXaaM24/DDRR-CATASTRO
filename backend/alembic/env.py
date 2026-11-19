@@ -1,9 +1,11 @@
 from logging.config import fileConfig
 
+from geoalchemy2 import alembic_helpers
 from sqlalchemy import create_engine, pool
 
 import app.modules.auth.models  # noqa: F401
 import app.modules.bitacora.models  # noqa: F401
+import app.modules.ddrr_catastro.models  # noqa: F401
 import app.modules.documentos.models  # noqa: F401
 import app.modules.funcionarios.models  # noqa: F401
 from alembic import context
@@ -23,7 +25,8 @@ TABLAS_IGNORADAS = {"spatial_ref_sys"}
 def include_object(objeto, nombre, tipo, reflejado, comparar_con):
     if tipo == "table" and nombre in TABLAS_IGNORADAS:
         return False
-    return True
+    # GeoAlchemy2 decide sobre sus índices espaciales para no duplicarlos.
+    return alembic_helpers.include_object(objeto, nombre, tipo, reflejado, comparar_con)
 
 
 def run_migrations_offline() -> None:
@@ -50,6 +53,8 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             include_object=include_object,
             compare_type=True,
+            process_revision_directives=alembic_helpers.writer,
+            render_item=alembic_helpers.render_item,
         )
         with context.begin_transaction():
             context.run_migrations()
