@@ -1,25 +1,33 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { useNavigate } from 'react-router'
+import {
+  IconoBandeja,
+  IconoDerecha,
+  IconoDocumento,
+  IconoIzquierda,
+} from '../../components/Iconos'
+import {
+  Aviso,
+  Boton,
+  EncabezadoPagina,
+  EstadoVacio,
+  Girador,
+  Tarjeta,
+} from '../../components/ui'
 import { ErrorApi } from '../../lib/api'
 import { useSesion } from '../auth/useSesion'
 import { TAMANO_PAGINA, listarDocumentos } from './api'
 import { FormularioSubida } from './FormularioSubida'
-import { NOMBRES_ESTADO, NOMBRES_TIPO } from './types'
-
-const fecha = new Intl.DateTimeFormat('es-BO', {
-  dateStyle: 'short',
-  timeStyle: 'short',
-})
-
-function formatearTamano(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
+import { formatearFecha, formatearTamano } from './formato'
+import { InsigniaEstado } from './InsigniaEstado'
+import { NOMBRES_TIPO } from './types'
 
 export function PaginaDocumentos() {
   const { usuario } = useSesion()
+  const navegar = useNavigate()
   const [pagina, setPagina] = useState(1)
+  const esFuncionario = usuario?.rol === 'funcionario'
 
   const consulta = useQuery({
     queryKey: ['documentos', pagina],
@@ -27,80 +35,101 @@ export function PaginaDocumentos() {
     placeholderData: keepPreviousData,
   })
 
-  const totalPaginas = consulta.data
-    ? Math.max(1, Math.ceil(consulta.data.total / TAMANO_PAGINA))
-    : 1
+  const total = consulta.data?.total ?? 0
+  const totalPaginas = Math.max(1, Math.ceil(total / TAMANO_PAGINA))
+  const desde = total === 0 ? 0 : (pagina - 1) * TAMANO_PAGINA + 1
+  const hasta = Math.min(pagina * TAMANO_PAGINA, total)
 
-  return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Documentos</h1>
-        <Link to="/" className="text-sm text-blue-700 hover:underline">
-          Volver al inicio
-        </Link>
+  const lista = (
+    <Tarjeta className="overflow-hidden">
+      <div className="flex items-center justify-between border-b border-slate-200/80 px-6 py-4">
+        <h2 className="text-base font-semibold text-slate-900">
+          {esFuncionario ? 'Mis documentos' : 'Todos los documentos'}
+        </h2>
+        {consulta.isFetching && <Girador className="size-4 text-marca-600" />}
       </div>
 
-      {/* Solo el funcionario sube documentos (el endpoint es SoloFuncionario). */}
-      {usuario?.rol === 'funcionario' && <FormularioSubida />}
-
       {consulta.isPending && (
-        <p role="status" className="text-slate-600">
-          Cargando documentos…
-        </p>
-      )}
-      {consulta.isError && (
-        <p
-          role="alert"
-          className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
+        <div
+          role="status"
+          className="flex items-center justify-center gap-2.5 py-16 text-sm text-slate-500"
         >
-          {consulta.error instanceof ErrorApi
-            ? consulta.error.message
-            : 'No se pudieron cargar los documentos.'}
-        </p>
+          <Girador className="size-4 text-marca-600" />
+          Cargando documentos…
+        </div>
+      )}
+
+      {consulta.isError && (
+        <div className="p-6">
+          <Aviso tipo="error">
+            {consulta.error instanceof ErrorApi
+              ? consulta.error.message
+              : 'No se pudieron cargar los documentos.'}
+          </Aviso>
+        </div>
       )}
 
       {consulta.data && consulta.data.items.length === 0 && (
-        <p className="text-slate-600">No hay documentos.</p>
+        <EstadoVacio
+          icono={IconoBandeja}
+          titulo="Todavía no hay documentos"
+          descripcion={
+            esFuncionario
+              ? 'Sube tu primer PDF con el formulario para empezar.'
+              : 'Aquí aparecerán los documentos que suba el personal.'
+          }
+        />
       )}
 
       {consulta.data && consulta.data.items.length > 0 && (
         <>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-200 text-slate-600">
+              <thead className="bg-slate-50/80 text-xs font-medium tracking-wide text-slate-500 uppercase">
                 <tr>
-                  <th className="py-2 pr-4 font-medium">Nombre</th>
-                  <th className="py-2 pr-4 font-medium">Tipo</th>
-                  <th className="py-2 pr-4 font-medium">Estado</th>
-                  <th className="py-2 pr-4 font-medium">Tamaño</th>
-                  <th className="py-2 font-medium">Subido</th>
+                  <th className="px-6 py-3 font-medium">Documento</th>
+                  <th className="px-3 py-3 font-medium">Estado</th>
+                  <th className="hidden px-3 py-3 font-medium md:table-cell">
+                    Tamaño
+                  </th>
+                  <th className="px-6 py-3 text-right font-medium">Subido</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {consulta.data.items.map((documento) => (
                   <tr
                     key={documento.id}
-                    className="border-b border-slate-100 text-slate-800"
+                    tabIndex={0}
+                    onClick={() => void navegar(`/documentos/${documento.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter')
+                        void navegar(`/documentos/${documento.id}`)
+                    }}
+                    className="group cursor-pointer transition-colors hover:bg-marca-50/40 focus-visible:bg-marca-50/60 focus-visible:outline-none"
                   >
-                    <td className="py-2 pr-4 break-all">
-                      <Link
-                        to={`/documentos/${documento.id}`}
-                        className="text-blue-700 hover:underline"
-                      >
-                        {documento.nombre_original}
-                      </Link>
+                    <td className="px-6 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition group-hover:bg-white group-hover:text-marca-700 group-hover:ring-1 group-hover:ring-marca-200">
+                          <IconoDocumento className="size-[18px]" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="max-w-[16rem] truncate font-medium text-slate-900 sm:max-w-xs">
+                            {documento.nombre_original}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {NOMBRES_TIPO[documento.tipo]}
+                          </p>
+                        </div>
+                      </div>
                     </td>
-                    <td className="py-2 pr-4">
-                      {NOMBRES_TIPO[documento.tipo]}
+                    <td className="px-3 py-3.5">
+                      <InsigniaEstado estado={documento.estado} />
                     </td>
-                    <td className="py-2 pr-4">
-                      {NOMBRES_ESTADO[documento.estado]}
-                    </td>
-                    <td className="py-2 pr-4">
+                    <td className="hidden px-3 py-3.5 text-slate-600 tabular-nums md:table-cell">
                       {formatearTamano(documento.tamano_bytes)}
                     </td>
-                    <td className="py-2">
-                      {fecha.format(new Date(documento.created_at))}
+                    <td className="px-6 py-3.5 text-right whitespace-nowrap text-slate-600">
+                      {formatearFecha(documento.created_at)}
                     </td>
                   </tr>
                 ))}
@@ -108,32 +137,59 @@ export function PaginaDocumentos() {
             </table>
           </div>
 
-          <div className="flex items-center justify-between text-sm text-slate-600">
-            <span>
-              Página {pagina} de {totalPaginas} · {consulta.data.total}{' '}
-              documento(s)
+          <div className="flex items-center justify-between border-t border-slate-200/80 px-6 py-3.5 text-sm">
+            <span className="text-slate-500">
+              <span className="font-medium text-slate-900 tabular-nums">
+                {desde}–{hasta}
+              </span>{' '}
+              de <span className="tabular-nums">{total}</span>
             </span>
-            <div className="space-x-2">
-              <button
-                type="button"
+            <div className="flex gap-2">
+              <Boton
+                variante="secundario"
+                className="px-2.5 py-1.5"
                 onClick={() => setPagina((p) => p - 1)}
                 disabled={pagina <= 1}
-                className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
+                aria-label="Página anterior"
               >
-                Anterior
-              </button>
-              <button
-                type="button"
+                <IconoIzquierda className="size-4" />
+              </Boton>
+              <Boton
+                variante="secundario"
+                className="px-2.5 py-1.5"
                 onClick={() => setPagina((p) => p + 1)}
                 disabled={pagina >= totalPaginas}
-                className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-50 disabled:opacity-50"
+                aria-label="Página siguiente"
               >
-                Siguiente
-              </button>
+                <IconoDerecha className="size-4" />
+              </Boton>
             </div>
           </div>
         </>
       )}
-    </main>
+    </Tarjeta>
+  )
+
+  return (
+    <>
+      <EncabezadoPagina
+        titulo="Documentos"
+        descripcion={
+          esFuncionario
+            ? 'Sube PDFs para su revisión y consulta los que ya enviaste.'
+            : 'Documentos subidos por el personal para su revisión.'
+        }
+      />
+
+      {/* Solo el funcionario sube documentos (el endpoint es SoloFuncionario). */}
+      {esFuncionario ? (
+        <div className="grid items-start gap-6 lg:grid-cols-[22rem_1fr]">
+          <FormularioSubida />
+          {lista}
+        </div>
+      ) : (
+        lista
+      )}
+    </>
   )
 }

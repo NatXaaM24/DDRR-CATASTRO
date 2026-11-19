@@ -7,6 +7,15 @@ import {
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { IconoHuella } from '../../components/Iconos'
+import {
+  Aviso,
+  Boton,
+  ErrorCampo,
+  Etiqueta,
+  Girador,
+} from '../../components/ui'
+import { clasesCampo } from '../../components/estilos'
 import { ErrorApi } from '../../lib/api'
 import {
   pedirOpcionesAutenticacion,
@@ -78,21 +87,14 @@ export function PasoBiometrico({
 
   if (!browserSupportsWebAuthn()) {
     return (
-      <div className="space-y-4">
-        <p
-          role="alert"
-          className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
-        >
+      <div className="space-y-5">
+        <Aviso tipo="error">
           Este navegador no permite la verificación biométrica. Usa una versión
           reciente de Chrome, Edge o Firefox, desde http://localhost:5173.
-        </p>
-        <button
-          type="button"
-          onClick={onVolver}
-          className="w-full rounded-md border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50"
-        >
+        </Aviso>
+        <Boton variante="secundario" ancho onClick={onVolver}>
           Volver
-        </button>
+        </Boton>
       </div>
     )
   }
@@ -101,65 +103,52 @@ export function PasoBiometrico({
     <form
       onSubmit={handleSubmit((datos) => verificar.mutate(datos))}
       noValidate
-      className="space-y-4"
+      className="space-y-5"
     >
-      <p className="text-sm text-slate-700">
-        {tieneCredencial
-          ? 'Contraseña correcta. Verifica tu identidad con tu dispositivo (huella, rostro o PIN).'
-          : 'Contraseña correcta. Falta registrar tu dispositivo (huella, rostro o PIN) para poder entrar.'}
-      </p>
+      <div className="flex items-start gap-4 rounded-xl bg-marca-50 p-4 ring-1 ring-marca-100">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-marca-700 shadow-xs ring-1 ring-marca-200">
+          <IconoHuella
+            className={`size-6 ${verificar.isPending ? 'animate-pulse' : ''}`}
+          />
+        </span>
+        <p className="text-sm leading-relaxed text-marca-900">
+          {tieneCredencial
+            ? 'Contraseña correcta. Confirma que eres tú con la huella, el rostro o el PIN de tu dispositivo.'
+            : 'Contraseña correcta. Para entrar, registra primero tu dispositivo (huella, rostro o PIN).'}
+        </p>
+      </div>
 
       {!tieneCredencial && (
         <div>
-          <label
-            htmlFor="nombre"
-            className="block text-sm font-medium text-slate-700"
-          >
-            Nombre del dispositivo
-          </label>
+          <Etiqueta htmlFor="nombre">Nombre del dispositivo</Etiqueta>
           <input
             id="nombre"
             type="text"
             aria-invalid={errors.nombre ? true : undefined}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+            className={clasesCampo}
             {...register('nombre')}
           />
-          {errors.nombre && (
-            <p role="alert" className="mt-1 text-sm text-red-600">
-              {errors.nombre.message}
-            </p>
-          )}
+          <ErrorCampo mensaje={errors.nombre?.message} />
         </div>
       )}
 
       {verificar.error && (
-        <p
-          role="alert"
-          className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
-        >
-          {mensajeDeError(verificar.error)}
-        </p>
+        <Aviso tipo="error">{mensajeDeError(verificar.error)}</Aviso>
       )}
 
-      <button
-        type="submit"
-        disabled={verificar.isPending}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-      >
-        {verificar.isPending
-          ? 'Esperando a tu dispositivo…'
-          : tieneCredencial
-            ? 'Verificar con mi dispositivo'
-            : 'Registrar mi dispositivo'}
-      </button>
-
-      <button
-        type="button"
-        onClick={onVolver}
-        className="w-full rounded-md border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50"
-      >
-        Volver
-      </button>
+      <div className="space-y-3">
+        <Boton type="submit" ancho disabled={verificar.isPending}>
+          {verificar.isPending && <Girador className="size-4" />}
+          {verificar.isPending
+            ? 'Esperando a tu dispositivo…'
+            : tieneCredencial
+              ? 'Verificar con mi dispositivo'
+              : 'Registrar mi dispositivo'}
+        </Boton>
+        <Boton variante="fantasma" ancho onClick={onVolver}>
+          Volver
+        </Boton>
+      </div>
     </form>
   )
 }
