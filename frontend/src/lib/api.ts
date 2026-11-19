@@ -49,6 +49,8 @@ interface Opciones {
   token?: string | null
   // false en login, refresh y logout: ahí un 401 no se arregla renovando.
   renovar?: boolean
+  // 'blob' para respuestas binarias (p. ej. el PDF de un documento).
+  formato?: 'json' | 'blob'
 }
 
 interface CuerpoDeError {
@@ -104,6 +106,7 @@ async function peticion<T>(
   }
 
   if (respuesta.status === 204) return undefined as T
+  if (opciones.formato === 'blob') return (await respuesta.blob()) as T
   return (await respuesta.json()) as T
 }
 

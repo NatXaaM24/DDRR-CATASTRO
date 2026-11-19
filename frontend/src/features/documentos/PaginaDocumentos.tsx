@@ -83,7 +83,12 @@ export function PaginaDocumentos() {
                     className="border-b border-slate-100 text-slate-800"
                   >
                     <td className="py-2 pr-4 break-all">
-                      {documento.nombre_original}
+                      <Link
+                        to={`/documentos/${documento.id}`}
+                        className="text-blue-700 hover:underline"
+                      >
+                        {documento.nombre_original}
+                      </Link>
                     </td>
                     <td className="py-2 pr-4">
                       {NOMBRES_TIPO[documento.tipo]}
