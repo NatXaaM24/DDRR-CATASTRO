@@ -20,3 +20,14 @@ export function subirDocumento(
   formulario.append('tipo', tipo)
   return api<Documento>('/documentos', { metodo: 'POST', cuerpo: formulario })
 }
+
+export function obtenerDocumento(id: string): Promise<Documento> {
+  return api<Documento>(`/documentos/${encodeURIComponent(id)}`)
+}
+
+// El PDF se pide con el token en la cabecera (no por URL), así que llega como Blob.
+export function descargarPdf(id: string): Promise<Blob> {
+  return api<Blob>(`/documentos/${encodeURIComponent(id)}/pdf`, {
+    formato: 'blob',
+  })
+}

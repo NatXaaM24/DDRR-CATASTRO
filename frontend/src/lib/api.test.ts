@@ -137,4 +137,15 @@ describe('renovación del token', () => {
     expect(llamada[1]?.body).toBe(formulario)
     expect(cabecera(llamada, 'Content-Type')).toBeUndefined()
   })
+
+  it("con formato 'blob' devuelve el cuerpo binario", async () => {
+    fetchFalso.mockResolvedValueOnce(
+      new Response(new Blob(['%PDF-1.4'], { type: 'application/pdf' }), {
+        status: 200,
+      }),
+    )
+    const blob = await api<Blob>('/documentos/1/pdf', { formato: 'blob' })
+    expect(blob).toBeInstanceOf(Blob)
+    expect(await blob.text()).toBe('%PDF-1.4')
+  })
 })
