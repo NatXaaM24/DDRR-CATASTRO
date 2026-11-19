@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useIdleTimer } from 'react-idle-timer'
+import { IconoAlerta } from '../../components/Iconos'
+import { Boton } from '../../components/ui'
 import { mantenerSesion } from './api'
 import { useSesion } from './useSesion'
 
@@ -19,29 +21,32 @@ function AvisoDeCierre({ onContinuar }: { onContinuar: () => void }) {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm">
       <div
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="titulo-inactividad"
-        className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg"
+        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200"
       >
+        <div className="flex size-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+          <IconoAlerta className="size-6" />
+        </div>
         <h2
           id="titulo-inactividad"
-          className="text-lg font-semibold text-slate-900"
+          className="mt-4 text-lg font-semibold tracking-tight text-slate-900"
         >
           ¿Sigues ahí?
         </h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Tu sesión se cerrará en {segundos} segundos por inactividad.
+        <p className="mt-1.5 text-sm text-slate-500">
+          Por seguridad, tu sesión se cerrará en{' '}
+          <span className="font-semibold text-slate-900 tabular-nums">
+            {segundos} s
+          </span>{' '}
+          por inactividad.
         </p>
-        <button
-          type="button"
-          onClick={onContinuar}
-          className="mt-4 w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
-        >
+        <Boton ancho className="mt-6" onClick={onContinuar}>
           Seguir conectado
-        </button>
+        </Boton>
       </div>
     </div>
   )
