@@ -127,4 +127,14 @@ describe('renovación del token', () => {
     })
     expect(renovar).not.toHaveBeenCalled()
   })
+
+  it('envía un FormData sin convertirlo a JSON ni fijar Content-Type', async () => {
+    const formulario = new FormData()
+    formulario.append('tipo', 'otro')
+    fetchFalso.mockResolvedValueOnce(responder(201, { ok: true }))
+    await api('/documentos', { metodo: 'POST', cuerpo: formulario })
+    const llamada = fetchFalso.mock.calls[0]
+    expect(llamada[1]?.body).toBe(formulario)
+    expect(cabecera(llamada, 'Content-Type')).toBeUndefined()
+  })
 })

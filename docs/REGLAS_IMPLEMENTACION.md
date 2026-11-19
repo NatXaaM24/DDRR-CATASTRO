@@ -217,7 +217,7 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 - [x] T-3.2 Subida de PDF con validación de tipo real y tamaño (R-SEG-7).
 - [x] T-3.3 Cálculo y almacenamiento del hash SHA-256 (R-SEG-8).
 - [x] T-3.4 Endpoints: listar, ver detalle y servir el PDF con control de acceso.
-- [ ] T-3.5 Frontend: pantalla de subida y listado de documentos.
+- [x] T-3.5 Frontend: pantalla de subida y listado de documentos.
 - [ ] T-3.6 Frontend: visor de PDF con `react-pdf`.
 
 ### Fase 4 — DDRR y Catastro (datos simulados)

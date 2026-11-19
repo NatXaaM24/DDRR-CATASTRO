@@ -63,8 +63,12 @@ async function peticion<T>(
 ): Promise<T> {
   const { metodo = 'GET', cuerpo } = opciones
 
+  // Un FormData (subida de archivos) se envía tal cual: el navegador fija
+  // el Content-Type multipart con su boundary.
+  const esFormulario = cuerpo instanceof FormData
   const cabeceras: Record<string, string> = {}
-  if (cuerpo !== undefined) cabeceras['Content-Type'] = 'application/json'
+  if (cuerpo !== undefined && !esFormulario)
+    cabeceras['Content-Type'] = 'application/json'
   if (token) cabeceras.Authorization = `Bearer ${token}`
 
   let respuesta: Response
@@ -72,7 +76,11 @@ async function peticion<T>(
     respuesta = await fetch(`${BASE}${ruta}`, {
       method: metodo,
       headers: cabeceras,
-      body: cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined,
+      body: esFormulario
+        ? cuerpo
+        : cuerpo !== undefined
+          ? JSON.stringify(cuerpo)
+          : undefined,
     })
   } catch {
     throw new ErrorApi(

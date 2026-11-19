@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { useSesion } from '../useSesion'
 
 export function PaginaInicio() {
@@ -9,6 +10,12 @@ export function PaginaInicio() {
         Hola, {usuario?.nombre_completo}
       </h1>
       <p className="mt-1 text-slate-600">Rol: {usuario?.rol}</p>
+      <Link
+        to="/documentos"
+        className="mt-6 block text-blue-700 hover:underline"
+      >
+        Documentos
+      </Link>
       <button
         type="button"
         onClick={() => void cerrarSesion()}
