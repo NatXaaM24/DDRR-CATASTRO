@@ -17,8 +17,9 @@ from app.core.errors import (
     NoEncontrado,
 )
 from app.modules.bitacora.service import BitacoraService
-from app.modules.documentos.models import Documento, TipoDocumento
+from app.modules.documentos.models import Documento, EstadoDocumento, TipoDocumento
 from app.modules.documentos.repository import DocumentoRepository
+from app.modules.funcionarios.models import Rol, Usuario
 
 TAMANO_BLOQUE = 1024 * 1024
 CABECERA_PDF = b"%PDF-"
@@ -138,6 +139,50 @@ class DocumentoService:
             destino.unlink(missing_ok=True)
             raise
         return documento
+
+    def listar(
+        self,
+        usuario: Usuario,
+        *,
+        estado: EstadoDocumento | None,
+        tipo: TipoDocumento | None,
+        pagina: int,
+        tamano: int,
+    ) -> tuple[list[Documento], int]:
+        """El funcionario solo ve sus documentos; el encargado ve todos."""
+        return self.repo.listar(
+            usuario_id=None if usuario.rol == Rol.encargado else usuario.id,
+            estado=estado,
+            tipo=tipo,
+            limite=tamano,
+            offset=(pagina - 1) * tamano,
+        )
+
+    def obtener(self, documento_id: uuid.UUID, usuario: Usuario) -> Documento:
+        """Documento visible para el usuario.
+
+        Si un funcionario pide uno ajeno se responde 404, no 403, para no
+        revelar que existe.
+        """
+        documento = self.repo.obtener_por_id(documento_id)
+        if documento is None or (
+            usuario.rol != Rol.encargado and documento.usuario_id != usuario.id
+        ):
+            raise NoEncontrado("No se encontró el documento.")
+        return documento
+
+    def abrir_pdf(self, documento_id: uuid.UUID, usuario: Usuario) -> tuple[Path, Documento]:
+        """Ruta del PDF para servirlo, tras verificar acceso e integridad (R-SEG-8)."""
+        documento = self.obtener(documento_id, usuario)
+        self.asegurar_integridad(documento.id, usuario_id=usuario.id)
+        self.bitacora.registrar(
+            "documento_consultado",
+            "documento",
+            usuario_id=usuario.id,
+            entidad_id=documento.id,
+        )
+        self.db.commit()
+        return get_settings().storage_dir / documento.ruta, documento
 
     def verificar_integridad(self, documento_id: uuid.UUID, *, usuario_id: uuid.UUID) -> bool:
         """Recalcula el SHA-256 del archivo y lo compara con el guardado (R-SEG-8).

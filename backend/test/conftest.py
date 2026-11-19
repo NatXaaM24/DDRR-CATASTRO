@@ -69,3 +69,13 @@ def h_encargado(encargado) -> dict[str, str]:
 @pytest.fixture
 def h_funcionario(funcionario) -> dict[str, str]:
     return _encabezados(funcionario)
+
+
+@pytest.fixture
+def otro_funcionario(limpieza) -> Usuario:
+    return _nuevo_usuario(Rol.funcionario, limpieza)
+
+
+@pytest.fixture
+def h_otro_funcionario(otro_funcionario) -> dict[str, str]:
+    return _encabezados(otro_funcionario)

@@ -42,11 +42,11 @@ def almacenamiento(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 @pytest.fixture
-def borrar_documentos(funcionario):
-    """Borra los documentos del funcionario antes de que la limpieza borre al usuario."""
+def borrar_documentos(limpieza, funcionario):
+    """Borra los documentos de los usuarios de prueba antes de que la limpieza los borre."""
     yield
     with SessionLocal() as db:
-        db.execute(delete(Documento).where(Documento.usuario_id == funcionario.id))
+        db.execute(delete(Documento).where(Documento.usuario_id.in_(limpieza)))
         db.commit()
 
 
@@ -219,3 +219,129 @@ def test_asegurar_integridad_lanza_documento_alterado(documento_subido, funciona
     ruta.write_bytes(b"%PDF-1.7 otro contenido")
     with SessionLocal() as db, pytest.raises(DocumentoAlterado):
         DocumentoService(db).asegurar_integridad(documento_id, usuario_id=funcionario.id)
+
+
+# --- Listar, ver detalle y servir el PDF (T-3.4) ---
+
+
+def _ids(respuesta) -> set[str]:
+    return {d["id"] for d in respuesta.json()["items"]}
+
+
+def test_listar_funcionario_ve_solo_los_suyos(
+    cliente, h_funcionario, h_otro_funcionario, borrar_documentos
+):
+    mio = _subir(cliente, h_funcionario, _pdf()).json()["id"]
+    ajeno = _subir(cliente, h_otro_funcionario, _pdf()).json()["id"]
+
+    r = cliente.get(URL, headers=h_funcionario)
+    assert r.status_code == 200
+    cuerpo = r.json()
+    assert _ids(r) == {mio}
+    assert cuerpo["total"] == 1
+    assert ajeno not in _ids(r)
+    assert "ruta" not in cuerpo["items"][0]
+
+
+def test_listar_encargado_ve_todos(
+    cliente, h_funcionario, h_encargado, h_otro_funcionario, borrar_documentos
+):
+    mio = _subir(cliente, h_funcionario, _pdf()).json()["id"]
+    ajeno = _subir(cliente, h_otro_funcionario, _pdf()).json()["id"]
+
+    r = cliente.get(URL, headers=h_encargado, params={"tamano": 100})
+    assert r.status_code == 200
+    assert {mio, ajeno} <= _ids(r)
+
+
+def test_listar_filtros_y_paginacion(cliente, h_funcionario, borrar_documentos):
+    _subir(cliente, h_funcionario, _pdf(), tipo="testimonio")
+    plano = _subir(cliente, h_funcionario, _pdf(), tipo="plano_catastral").json()["id"]
+
+    r = cliente.get(URL, headers=h_funcionario, params={"tipo": "plano_catastral"})
+    assert _ids(r) == {plano}
+
+    r = cliente.get(URL, headers=h_funcionario, params={"tamano": 1, "pagina": 2})
+    cuerpo = r.json()
+    assert cuerpo["total"] == 2
+    assert len(cuerpo["items"]) == 1
+    assert cuerpo["pagina"] == 2
+
+    r = cliente.get(URL, headers=h_funcionario, params={"estado": "no_existe"})
+    assert r.status_code == 422
+
+
+def test_listar_sin_sesion(cliente):
+    assert cliente.get(URL).status_code == 401
+
+
+def test_detalle_propio_y_por_encargado(cliente, h_funcionario, h_encargado, borrar_documentos):
+    documento_id = _subir(cliente, h_funcionario, _pdf()).json()["id"]
+    for encabezados in (h_funcionario, h_encargado):
+        r = cliente.get(f"{URL}/{documento_id}", headers=encabezados)
+        assert r.status_code == 200
+        assert r.json()["id"] == documento_id
+
+
+def test_detalle_ajeno_responde_404(cliente, h_funcionario, h_otro_funcionario, borrar_documentos):
+    documento_id = _subir(cliente, h_otro_funcionario, _pdf()).json()["id"]
+    r = cliente.get(f"{URL}/{documento_id}", headers=h_funcionario)
+    assert r.status_code == 404
+    assert r.json()["code"] == "no_encontrado"
+
+
+def test_detalle_inexistente_e_id_invalido(cliente, h_funcionario):
+    assert cliente.get(f"{URL}/{uuid.uuid4()}", headers=h_funcionario).status_code == 404
+    assert cliente.get(f"{URL}/no-es-uuid", headers=h_funcionario).status_code == 422
+
+
+def test_servir_pdf(cliente, h_funcionario, h_encargado, funcionario, borrar_documentos):
+    datos = _pdf()
+    documento_id = _subir(cliente, h_funcionario, datos, nombre="testimonio ñ.pdf").json()["id"]
+
+    for encabezados in (h_funcionario, h_encargado):
+        r = cliente.get(f"{URL}/{documento_id}/pdf", headers=encabezados)
+        assert r.status_code == 200
+        assert r.content == datos
+        assert r.headers["content-type"] == "application/pdf"
+        assert r.headers["content-disposition"].startswith("inline")
+        assert r.headers["cache-control"] == "no-store"
+
+    with SessionLocal() as db:
+        consulta = select(Bitacora).where(
+            Bitacora.entidad_id == uuid.UUID(documento_id),
+            Bitacora.accion == "documento_consultado",
+        )
+        assert len(list(db.scalars(consulta))) == 2
+
+
+def test_servir_pdf_ajeno_responde_404(
+    cliente, h_funcionario, h_otro_funcionario, borrar_documentos
+):
+    documento_id = _subir(cliente, h_otro_funcionario, _pdf()).json()["id"]
+    r = cliente.get(f"{URL}/{documento_id}/pdf", headers=h_funcionario)
+    assert r.status_code == 404
+
+
+def test_servir_pdf_alterado_responde_409(
+    cliente, h_funcionario, borrar_documentos, almacenamiento
+):
+    documento_id = _subir(cliente, h_funcionario, _pdf()).json()["id"]
+    (pdf,) = almacenamiento.rglob("*.pdf")
+    pdf.write_bytes(pdf.read_bytes() + b"%cambio")
+
+    r = cliente.get(f"{URL}/{documento_id}/pdf", headers=h_funcionario)
+    assert r.status_code == 409
+    assert r.json()["code"] == "documento_alterado"
+    with SessionLocal() as db:
+        acciones = set(
+            db.scalars(
+                select(Bitacora.accion).where(Bitacora.entidad_id == uuid.UUID(documento_id))
+            )
+        )
+    assert "documento_alterado" in acciones
+    assert "documento_consultado" not in acciones
+
+
+def test_servir_pdf_sin_sesion(cliente):
+    assert cliente.get(f"{URL}/{uuid.uuid4()}/pdf").status_code == 401
