@@ -222,7 +222,7 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 
 ### Fase 4 — DDRR y Catastro (datos simulados)
 
-- [ ] T-4.1 Definir el modelo de datos: partidas (DDRR) y predios (Catastro, con geometría PostGIS) y la proyección métrica local.
+- [x] T-4.1 Definir el modelo de datos: partidas (DDRR) y predios (Catastro, con geometría PostGIS) y la proyección métrica local.
 - [ ] T-4.2 Migraciones de las tablas y los índices espaciales.
 - [ ] T-4.3 Script de datos simulados (seed) con casos coherentes y casos con discrepancias deliberadas.
 - [ ] T-4.4 Módulo `ddrr_catastro`: consultar partida y predio por identificador.
@@ -290,3 +290,4 @@ Marca cada tarea con `[x]` al cumplir la definición de terminado.
 | 2026-11-06 | IA: Ollama local; sin servicios externos de IA |
 | 2026-11-06 | Stack congelado según la sección 1.2 |
 | 2026-11-06 | Fuera de alcance: quechua y aymara, MinIO, integración con sistemas reales |
+| 2026-11-19 | Proyección métrica local: WGS 84 / UTM zona 19S (EPSG:32719); se almacena en 4326 y se transforma solo para medir (T-4.1) |
